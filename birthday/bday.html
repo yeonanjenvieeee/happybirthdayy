@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css">
+  <title>Happy Birthday !</title>
+  
+<style>
+    html, body { margin: 0; height: 100%; background: #000000; overflow: hidden; }
+    canvas { display: block; }
+    .hint {
+      position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
+      color: #ccc; font-family: system-ui, sans-serif; font-size: 14px; opacity: 0.8;
+    }
+  </style>
+
+</head>
+<body>
+ <canvas id="c"></canvas>
+  <div class="hint">Click anywhere to launch fireworks</div>
+  <script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    let W, H, fireworks = [], particles = [];
+
+    function resize() {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Utility
+    const rand = (min, max) => Math.random() * (max - min) + min;
+    const hue = () => Math.floor(rand(0, 360));
+
+    class Firework {
+      constructor(sx, sy, tx, ty) {
+        this.x = sx; this.y = sy;
+        this.sx = sx; this.sy = sy;
+        this.tx = tx; this.ty = ty;
+        this.distanceToTarget = Math.hypot(tx - sx, ty - sy);
+        this.distanceTraveled = 0;
+        this.speed = rand(6, 9);
+        this.angle = Math.atan2(ty - sy, tx - sx);
+        this.brightness = rand(60, 80);
+        this.hue = hue();
+        this.trail = [];
+        this.trailLength = 6;
+      }
+      update(index) {
+        this.trail.push({ x: this.x, y: this.y });
+        if (this.trail.length > this.trailLength) this.trail.shift();
+
+        const vx = Math.cos(this.angle) * this.speed;
+        const vy = Math.sin(this.angle) * this.speed;
+        this.x += vx; this.y += vy;
+        this.distanceTraveled = Math.hypot(this.x - this.sx, this.y - this.sy);
+
+        if (this.distanceTraveled >= this.distanceToTarget - this.speed) {
+          this.explode();
+          fireworks.splice(index, 1);
+        }
+      }
+      explode() {
+        const count = Math.floor(rand(40, 80));
+        for (let i = 0; i < count; i++) {
+          particles.push(new Particle(this.tx, this.ty, this.hue));
+        }
+      }
+      draw() {
+        ctx.beginPath();
+        const last = this.trail[0] || { x: this.x, y: this.y };
+        ctx.moveTo(last.x, last.y);
+        ctx.lineTo(this.x, this.y);
+        ctx.strokeStyle = `hsl(${this.hue}, 100%, ${this.brightness}%)`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+
+    class Particle {
+      constructor(x, y, hue) {
+        this.x = x; this.y = y;
+        this.hue = hue;
+        this.angle = rand(0, Math.PI * 2);
+        this.speed = rand(1, 6);
+        this.friction = 0.95;
+        this.gravity = 0.03;
+        this.brightness = rand(50, 80);
+        this.alpha = 1;
+        this.decay = rand(0.007, 0.018);
+        this.trail = [];
+        this.trailLength = 8;
+        this.wind = rand(-0.02, 0.02);
+      }
+      update(index) {
+        this.trail.push({ x: this.x, y: this.y });
+        if (this.trail.length > this.trailLength) this.trail.shift();
+
+        this.speed *= this.friction;
+        this.x += Math.cos(this.angle) * this.speed + this.wind;
+        this.y += Math.sin(this.angle) * this.speed + this.gravity;
+        this.alpha -= this.decay;
+
+        if (this.alpha <= 0.02) particles.splice(index, 1);
+      }
+      draw() {
+        ctx.beginPath();
+        const last = this.trail[0] || { x: this.x, y: this.y };
+        ctx.moveTo(last.x, last.y);
+        ctx.lineTo(this.x, this.y);
+        ctx.strokeStyle = `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+
+    // Background glow and fade
+    function fadeCanvas() {
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = 'lighter';
+    }
+
+    function loop() {
+      requestAnimationFrame(loop);
+      fadeCanvas();
+
+      fireworks.forEach((fw, i) => { fw.update(i); fw.draw(); });
+      particles.forEach((p, i) => { p.update(i); p.draw(); });
+
+      // Ambient random fireworks
+      if (Math.random() < 0.02) {
+        const sx = rand(W * 0.3, W * 0.7);
+        const sy = H;
+        const tx = rand(W * 0.1, W * 0.9);
+        const ty = rand(H * 0.1, H * 0.5);
+        fireworks.push(new Firework(sx, sy, tx, ty));
+      }
+    }
+
+    canvas.addEventListener('click', (e) => {
+      const sx = rand(W * 0.3, W * 0.7);
+      const sy = H;
+      const rect = canvas.getBoundingClientRect();
+      const tx = e.clientX - rect.left;
+      const ty = e.clientY - rect.top;
+      fireworks.push(new Firework(sx, sy, tx, ty));
+    });
+
+    loop();
+  </script>
+
+  <div class="cake">
+    <div class="layer bottom"></div>
+    <div class="layer middle"></div>
+    <div class="layer top"></div>
+    <div class="frosting"></div>
+
+    <div class="candles">
+      <div class="candle"><div class="flame"></div></div>
+      <div class="candle"><div class="flame"></div></div>
+      <div class="candle"><div class="flame"></div></div>
+    </div>
+
+    <div class="plate"></div>
+  </div>
+
+   <audio autoplay loop>
+    <source src="happy-birthday-357371.mp3" type="audio/mpeg">
+   
+  </audio>
+
+  <h1> Happy Birthday!!</h1>
+
+  <audio id="birthdaySong" loop>
+    <source src="happy-birthday-357371.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    // Wait for user interaction
+    document.body.addEventListener('click', function playSong() {
+      const song = document.getElementById('birthdaySong');
+      song.play();
+      // Remove event listener after first click
+      document.body.removeEventListener('click', playSong);
+    });
+  </script>
+
+  <h5> link anywhere to play the song</h5>
+
+  <img src="images-removebg-preview.png" class="balloons">
+  <img src="images-removebg-preview.png" class="gift">
+
+  
+</body>
+</html>

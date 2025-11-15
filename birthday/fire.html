@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Maraming Balloons</title>
+<style>
+  body { margin:0; background:#87ceeb; overflow:hidden; }
+  .balloon {
+    position: absolute;
+    bottom: -100px;
+    width: 60px; height: 80px;
+    background: radial-gradient(circle at 30% 30%, red, darkred);
+    border-radius: 50% 50% 50% 50%;
+    animation: rise 10s infinite linear;
+  }
+  .string {
+    position: absolute;
+    top: 80px; left: 28px;
+    width: 2px; height: 40px;
+    background: #555;
+  }
+  @keyframes rise {
+    from { transform: translateY(0); }
+    to { transform: translateY(-120vh); }
+  }
+</style>
+</head>
+<body>
+  <!-- Gumawa ng maraming balloons -->
+  <div class="balloon" style="left:10%; animation-delay:0s;"><div class="string"></div></div>
+  <div class="balloon" style="left:30%; background: radial-gradient(circle at 30% 30%, blue, darkblue); animation-delay:2s;"><div class="string"></div></div>
+  <div class="balloon" style="left:50%; background: radial-gradient(circle at 30% 30%, green, darkgreen); animation-delay:4s;"><div class="string"></div></div>
+  <div class="balloon" style="left:70%; background: radial-gradient(circle at 30% 30%, yellow, goldenrod); animation-delay:6s;"><div class="string"></div></div>
+</body>
+</html>
